@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- One gate for the whole product now. index.html sets every pass,
+     so reaching this page at all means access was already granted;
+     this guard only catches someone who typed the URL directly. -->
 <script>
-// Accepts either pass — the regular gameplay pass, or the separate
-// standings-only pass. Which one a visitor actually has gets
-// checked further down, once the page's own JS decides whether to
-// show the real intro screen or land them straight on standings.
-if (sessionStorage.getItem('ritnome-gate-pass') !== '1' && sessionStorage.getItem('ritnome-standings-gate-pass') !== '1') {
-  window.location.replace('ritnome-index.html');
+if (sessionStorage.getItem('ritnome-gate-pass') !== '1') {
+  window.location.replace('index.html');
 }
 </script>
 <meta charset="UTF-8">
@@ -109,20 +108,14 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .bot-btn span{display:block;color:#00e5ff;font-size:.55rem;margin-top:1px}
 .start-btn{border-color:#00e5ff;background:linear-gradient(180deg,#4de0ff,#00e5ff);color:#031018;font-size:1.1rem;box-shadow:0 0 18px rgba(0,229,255,.7)}
 .start-btn:disabled{opacity:.5}
-
-@media (max-width:768px){
-
-}
 </style>
 </head>
 <body>
 <div id="screen-intro">
   <button style="position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:120" id="introBackBtn" type="button">← Back</button>
-  <!-- Dynamic Memory — a direct link across to the platform's
-       sibling product, matching the same cross-product link
-       already placed on Dynamic Memory's own hub, pointing back
-       here. -->
-  <a href="https://memorybball.com" style="position:fixed;top:16px;right:16px;padding:8px 16px;border:1px solid rgba(255,107,53,.5);background:rgba(255,107,53,.15);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;cursor:pointer;backdrop-filter:blur(4px);text-decoration:none;z-index:120">🎯 Dynamic Memory</a>
+  <!-- Memory games — now the same site, so this is navigation
+       between two parts of one product, not a cross-domain link. -->
+  <a href="dynamic-hub.html" style="position:fixed;top:16px;right:16px;padding:8px 16px;border:1px solid rgba(255,107,53,.5);background:rgba(255,107,53,.15);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;cursor:pointer;backdrop-filter:blur(4px);text-decoration:none;z-index:120">🎯 Memory Games</a>
 
   <div class="rit-sub">Ritnome Basketball</div>
   <div class="rit-rule">The beat never waits. Tap as many as you can.</div>
@@ -138,7 +131,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:420px;margin:16px auto 0">
   <button class="box-open-btn" id="openBoxBtn">🏆 THE STANDINGS</button>
 
-  <div style="margin-top:24px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058">Powered by <a href="https://ritnome.com" target="_blank" rel="noopener" style="color:#8892a0;font-style:italic;text-decoration:underline">Gostar Digital</a></div>
+  <div style="margin-top:24px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058">Powered by <b style="color:#8892a0;font-style:italic">Gostar Digital</b></div>
 </div>
 
 <div id="screen-game">
@@ -206,16 +199,7 @@ var currentPattern='gonogo';
 // pattern, not split across two different target counts.
 var currentTargetCount=25;
 
-// Reaction Speed (the "random" pattern — a direct match for the
-// standalone Reaction Speed game, so it's renamed here to be
-// honest about that) always shows the same, consistent basketball
-// orange — one real ball, not a rainbow of differently-colored
-// ones. Go No Go keeps its own separate orange/non-orange logic
-// entirely (passed in via forceColor below).
 var BASKETBALL_ORANGE='#ff6b35';
-// The same basketball-seam texture used across Reaction Velocity's
-// own targets — layered over the random color, so each lit cell
-// genuinely reads as a basketball, not just a colored square.
 var BALL_SEAMS="url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2249%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23c%29%22%20fill%3D%22none%22%20stroke%3D%22rgba%280%2C0%2C0%2C.4%29%22%20stroke-width%3D%223.4%22%3E%3Cline%20x1%3D%2250%22%20y1%3D%22-4%22%20x2%3D%2250%22%20y2%3D%22104%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20-4%20104%2050%22/%3E%3Cpath%20d%3D%22M%20-4%2050%20Q%2050%20104%20104%2050%22/%3E%3Cellipse%20cx%3D%2250%22%20cy%3D%2250%22%20rx%3D%2224%22%20ry%3D%2249%22/%3E%3C/g%3E%3C/svg%3E')";
 
 var PATTERN_LABELS={gonogo:'Go No Go',random:'Reaction Speed'};
@@ -231,6 +215,7 @@ document.querySelectorAll('.pattern-btn').forEach(function(btn){
     $('introInfo').innerHTML=currentPattern==='gonogo'?GONOGO_INFO:currentPattern==='random'?REACTION_SPEED_INFO:DEFAULT_INFO;
   };
 });
+
 // ---- Audio: a synthesized dribble thump, not a sample. A low
 // sine sweep gives the thud its body; a short filtered noise burst
 // on top gives it the percussive slap of a ball meeting the floor.
@@ -269,23 +254,13 @@ function playThump(){
 }
 
 // ══════════════════════════════════════════════════════
-//  PATTERNS — the beat never waits. Every 100 BPM tick, the light
-//  advances to the next position in whichever pattern is selected,
-//  regardless of whether the player tapped the previous one in time.
-//  No miss penalty, just no hit counted — the score is purely how
-//  fast real hits stack up against a beat that never slows for you.
+//  PATTERNS — the beat never waits. Every tick, the light advances
+//  to the next position in whichever pattern is selected,
+//  regardless of whether the player tapped the previous one in
+//  time. No miss penalty, just no hit counted.
 // ══════════════════════════════════════════════════════
 function idxOf(row,col){return row*COLS+col}
 
-// GO NO GO — Reactific's own core mechanic, brought into Ritnome.
-// The light moves to a random cell every beat, but now also cycles
-// color — genuinely orange only ~14%-30% of the time, wandering
-// each beat, matching Reactific's own established rhythm exactly.
-// Tap while it's orange: a real hit. Tap on anything else: the
-// round genuinely ends right there — this is the one pattern in
-// Ritnome with a real, meaningful penalty for a wrong tap, since
-// restraint under pressure is the whole point of the mechanic this
-// mode is built from.
 var GO_COLOR='#ff6b35';
 var NOGO_COLORS=['#00e5ff','#ffd23f','#3ddc72','#a855f7','#c9c9d4','#ff3b8d'];
 var currentIsGo=false;
@@ -344,9 +319,6 @@ function advance(){
   if(currentIdx>=0)clearCell(currentIdx);
   currentIdx=PATTERNS[currentPattern]();
   if(currentPattern==='gonogo'){
-    // Red probability wanders ~14%-30% each beat, matching
-    // Reactific's own established rhythm exactly — no countable
-    // pattern to it.
     var chance=0.14+Math.random()*0.16;
     currentIsGo=Math.random()<chance;
     litCell(currentIdx,currentIsGo?GO_COLOR:NOGO_COLORS[Math.floor(Math.random()*NOGO_COLORS.length)]);
@@ -355,9 +327,8 @@ function advance(){
       $('hBest').textContent=Math.max(0,25-redCount);
       if(redCount>=25){
         // The 25th red still gets its own full, fair flash window —
-        // matching Reactific's own established timing exactly — the
-        // round only actually ends once that response window has
-        // passed, whether the player tapped it or not.
+        // the round only actually ends once that response window
+        // has passed, whether the player tapped it or not.
         roundEnding=true;
         scheduleRoundEnd();
       }
@@ -368,9 +339,6 @@ function advance(){
     if(currentPattern==='random'){
       $('hBest').textContent=Math.max(0,100-totalFlashes);
       if(totalFlashes>=100){
-        // Same fairness rule as Go No Go's own 25th red — the
-        // 100th flash still gets its own full response window
-        // before the round actually ends, whether it lands or not.
         roundEnding=true;
         scheduleRoundEnd();
       }
@@ -451,7 +419,7 @@ function handleTap(idx){
   hasTappedCurrent=true;
   if(currentPattern==='gonogo'){
     // No round-ending penalty here — Go No Go is a fixed-length
-    // challenge now (25 total red appearances), not a
+    // challenge (25 total red appearances), not a
     // survive-until-a-mistake one. Tapping a non-red cell simply
     // doesn't count, and the round just continues.
     if(!currentIsGo)return;
@@ -463,8 +431,6 @@ function handleTap(idx){
     hits++;
     $('hHits').textContent=hits+'/'+currentTargetCount;
     if(hits>=25){
-      // Reached the real target early — the round ends right here,
-      // a genuine success, not waiting for the 100-flash cap at all.
       finishReactionSpeedRound(true);
     }
     return;
@@ -484,12 +450,6 @@ function finishReactionSpeedRound(reachedTarget){
   var finalTime=(performance.now()-startTime)/1000;
   stopRound();
   recordScoreToStandings(currentPlayerName,currentPattern,finalTime,totalFlashes,hits);
-  // The denominator reflects how the round actually ended — the
-  // real 25-hit target if reached, or the 100-flash cap if not.
-  // The HUD's own hits box only ever gets set by handleTap(), which
-  // always writes against the fixed 25 — so without this, it would
-  // stay stuck showing the wrong denominator once the round ends
-  // via the 100-flash cap instead of a tap.
   var denom=reachedTarget?25:100;
   $('hHits').textContent=hits+'/'+denom;
   msg((reachedTarget?'🏆 25/25 — ':'✅ DONE — ')+hits+'/'+denom+' HITS','perfect');
@@ -499,10 +459,7 @@ function finishReactionSpeedRound(reachedTarget){
 
 // Keeps the court at a true 2:1 ratio (matching the drawn court
 // background exactly), fitting the largest size that stays inside
-// the available area — without this, width:100%/height:100% just
-// stretches to whatever shape the remaining screen space happens to
-// be, distorting the court away from a real basketball court's own
-// actual proportions.
+// the available area.
 function resizeCourtToFit(){
   var area=document.querySelector('.court-area');
   var court=$('court');
@@ -540,8 +497,8 @@ function launchGame(nm){
 
 // ══════════════════════════════════════════════════════
 //  STANDINGS DISPLAY — one shared table, filtered by pattern per
-//  tab, sorted by time ascending since faster is better here (the
-//  reverse of every score-based board elsewhere on the platform).
+//  tab. Hit count is the score for both patterns, so more is
+//  better.
 // ══════════════════════════════════════════════════════
 var STANDINGS_PATTERNS=[
   {key:'gonogo',label:'Go No Go'},
@@ -551,8 +508,7 @@ var currentStandingsPattern='gonogo';
 
 function fetchStandingsFor(patternKey){
   // Scoped to the current session's own school — two different
-  // access codes are two genuinely separate boards, matching the
-  // same rule every gated game on the platform follows.
+  // access codes are two genuinely separate boards.
   var school=sessionStorage.getItem('ritnome-school')||'';
   var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,time_seconds,total_flashes,hits_scored&pattern=eq.'+encodeURIComponent(patternKey)+'&school_name=eq.'+encodeURIComponent(school);
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
@@ -561,8 +517,6 @@ function fetchStandingsFor(patternKey){
       var best={};
       (rows||[]).forEach(function(r){
         var existing=best[r.player_name];
-        // Hit-count is the real score for both remaining patterns —
-        // more is better, not a time at all.
         if(!existing||r.hits_scored>existing.hitsScored){
           best[r.player_name]={name:r.player_name,time:r.time_seconds,flashes:r.total_flashes,hitsScored:r.hits_scored};
         }
@@ -611,12 +565,6 @@ function renderStandingsForPattern(patternKey){
           +'</div>'
           +'</div>';
       }
-      // The denominator reflects how that particular run actually
-      // ended — the real 25-hit target if reached, or the 100-flash
-      // cap if not. "Out Of" shows the real, total flashes it
-      // actually took to get there — genuinely different from the
-      // denominator itself, since a 25/25 run could take anywhere
-      // from a perfect 25 flashes up to nearly the full 100.
       var hs=(p.hitsScored===null||p.hitsScored===undefined)?null:p.hitsScored;
       var denom=(hs!==null&&hs>=25)?25:100;
       mainScore=(hs===null?'--':hs)+'/'+denom;
@@ -628,8 +576,6 @@ function renderStandingsForPattern(patternKey){
         +'</div>'
         +'</div>';
     }).join('');
-    // Both remaining patterns are hit-count-based — flat rows, no
-    // detail to expand, so no click-to-toggle listener needed here.
   }).catch(function(){
     listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
   });
@@ -641,49 +587,19 @@ function openStandings(){
   $('screen-box').style.display='flex';
   renderStandingsForPattern(currentPattern);
 }
-// A regular, gameplay-licensed player never gets a direct path into
-// standings at all — the two codes are genuinely, fully separate, so
-// even a player already inside the game gets sent to the standings
-// gate to prove they hold that code too, not just waved through on
-// their gameplay license. If they already hold the standings pass
-// from earlier in this session, the gate's own "already passed"
-// check sends them straight back here instantly, landing them on
-// standings via the standingsOnly path below — no redundant re-entry.
+
+// One code opens everything now, so standings is simply another
+// screen in this page — no separate gate to send anyone to.
 $('openBoxBtn').addEventListener('click',function(){
-  window.location.href='ritnome-standings-gate.html';
+  openStandings();
 });
 
-// A visitor holding only the standings-only pass (not the regular
-// gameplay pass) never gets the real intro screen at all — this
-// code was issued specifically to view the board, not to play, so
-// they land straight on standings and "← Back" signs them out of
-// this session entirely rather than returning them to a real,
-// playable intro screen they were never actually licensed for.
-//
-// Detected via the gate's own explicit ?view=standings signal on
-// its redirect, not by inferring it from the absence of the
-// gameplay pass — a visitor who genuinely holds both codes (a coach
-// with their own demo access, say) still needs to correctly reach
-// standings when that's what they actually asked for, not get stuck
-// re-landing on the intro screen because the gameplay pass also
-// happens to be present.
-var standingsOnly = new URLSearchParams(window.location.search).get('view') === 'standings';
-if (standingsOnly) {
-  openStandings();
-}
-
 $('closeBoxBtn').addEventListener('click',function(){
-  if (standingsOnly) {
-    sessionStorage.removeItem('ritnome-standings-gate-pass');
-    window.location.href = 'ritnome-standings-gate.html';
-    return;
-  }
   $('screen-box').style.display='none';
   $('screen-intro').style.display='flex';
 });
 
 $('introStartBtn').onclick=function(){
-  if (standingsOnly) return;
   var nameField=$('playerNameInputMain');
   var nm=nameField.value.trim();
   if(!nm){
@@ -695,7 +611,10 @@ $('introStartBtn').onclick=function(){
   launchGame(nm);
 };
 $('actBtn').onclick=function(){startRound()};
-$('introBackBtn').onclick=function(){window.location.href='ritnome.html'};
+// Back on the intro screen leaves Ritnome entirely, so it goes to
+// the hub. The in-game Home button just returns to this page's own
+// intro screen.
+$('introBackBtn').onclick=function(){window.location.href='dynamic-hub.html'};
 $('menuBtn').onclick=function(){stopRound();window.location.href='ritnome.html'};
 })();
 </script>

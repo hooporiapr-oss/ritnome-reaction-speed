@@ -41,6 +41,7 @@
     box-shadow:0 0 30px rgba(0,229,255,.5);
   }
   .enter-btn:active{transform:scale(.98)}
+  .enter-btn:disabled{opacity:.6;cursor:default;box-shadow:none}
 
   .err{margin-top:14px;color:#ff8888;font-size:.85rem;font-weight:700;min-height:18px}
 
@@ -62,7 +63,7 @@
     <div class="code-panel" id="code-panel">
       <div class="code-label">Access Code</div>
       <input class="code-input" id="gate-code" maxlength="40" placeholder="• • • •" autocomplete="off" onkeydown="if(event.key==='Enter')tryEnter()">
-      <button class="enter-btn" onclick="tryEnter()">Enter Ritnome →</button>
+      <button class="enter-btn" id="gate-btn" onclick="tryEnter()">Enter Ritnome →</button>
       <div class="err" id="gate-err"></div>
     </div>
 
@@ -82,41 +83,52 @@ var $=function(id){return document.getElementById(id)};
 //  product already uses. A code issued for any other product on
 //  this platform will NOT unlock this gate, and vice versa, even
 //  though all of them live in the same table. To issue / expire /
-//  revoke Ritnome licenses, admin.html needs a matching product
-//  tab for 'ritnome'.
+//  revoke Ritnome licenses, use admin.html.
+//
+//  The licenses table is NOT readable from the browser. This page
+//  asks the database one question through the check_license
+//  function — "is this code good for this product?" — and gets
+//  back only a yes or no plus the school name. Nobody can list the
+//  codes, because nothing here can read the table.
+//
+//  Expiry is judged inside that function, on the database's own
+//  clock, so an expired code cannot be waved through by editing
+//  this page or changing a device's date.
 // ══════════════════════════════════════════════════════
 var SUPABASE_URL = 'https://sdaphocueugzfvjovuxd.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
 var PRODUCT = 'ritnome';
 // ══════════════════════════════════════════════════════
 
+var checking = false;
+
 function tryEnter(){
+  if (checking) return;
+
   var input = $('gate-code').value.trim();
   if (!input){ return; }
+
+  checking = true;
+  $('gate-btn').disabled = true;
   $('gate-err').style.color = '';
   $('gate-err').textContent = 'Checking…';
 
-  var url = SUPABASE_URL + '/rest/v1/licenses'
-    + '?select=code,expires_at,active,product,school_name'
-    + '&code=ilike.' + encodeURIComponent(input)
-    + '&active=eq.true'
-    + '&product=eq.' + PRODUCT;
-
-  fetch(url, {
+  fetch(SUPABASE_URL + '/rest/v1/rpc/check_license', {
+    method: 'POST',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-    }
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ p_code: input, p_product: PRODUCT })
   })
-  .then(function(r){ return r.json(); })
-  .then(function(rows){
-    var lic = (rows && rows.length) ? rows[0] : null;
-
-    if (!lic){ return reject('Invalid code — check with your administrator'); }
-
-    if (lic.expires_at){
-      var exp = new Date(lic.expires_at + 'T23:59:59');
-      if (new Date() > exp){ return reject('This license has expired'); }
+  .then(function(r){
+    if (!r.ok) throw new Error('lookup failed');
+    return r.json();
+  })
+  .then(function(lic){
+    if (!lic || !lic.ok){
+      return reject('Invalid or expired code — check with your administrator');
     }
 
     sessionStorage.setItem('ritnome-gate-pass','1');
@@ -125,17 +137,24 @@ function tryEnter(){
     window.location.href = 'ritnome.html';
   })
   .catch(function(){
+    // A network or server failure is a different problem from a bad
+    // code, and saying so saves someone hunting for a typo that
+    // isn't there.
     reject('Connection problem — please try again');
   });
 }
 
 function reject(msg){
+  checking = false;
+  $('gate-btn').disabled = false;
   $('gate-err').style.color = '#ff8888';
   $('gate-err').textContent = msg;
   var box = $('gate-code');
   box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
   box.value=''; box.focus();
 }
+
+$('gate-code').focus();
 </script>
 </body>
 </html>
